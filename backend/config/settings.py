@@ -153,7 +153,7 @@ APP_RETURN_URL = env("APP_RETURN_URL", "")
 # Вход по номеру без Telegram — только для разработки и тестов.
 DEV_LOGIN_ENABLED = env_bool("DEV_LOGIN_ENABLED", DEBUG)
 
-# Пуш-уведомления: "log" (только запись в лог) или "fcm".
+# Пуш-уведомления: "log" (только лог), "expo" (Expo Push, для приложения на Expo) или "fcm".
 PUSH_BACKEND = env("PUSH_BACKEND", "log")
 FCM_CREDENTIALS_FILE = env("FCM_CREDENTIALS_FILE", "")
 

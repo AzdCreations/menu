@@ -98,10 +98,30 @@ def send_push(notification):
         return
     payload = {"type": notification.type, "notification_id": str(notification.id)}
     payload.update({key: str(value) for key, value in notification.data.items()})
-    if settings.PUSH_BACKEND == "fcm":
+    if settings.PUSH_BACKEND == "expo":
+        _send_expo(tokens, notification.title, notification.body, payload)
+    elif settings.PUSH_BACKEND == "fcm":
         _send_fcm(tokens, notification.title, notification.body, payload)
     else:
         logger.info("PUSH to user %s: %s — %s %s", notification.user_id, notification.title, notification.body, payload)
+
+
+def _send_expo(tokens, title, body, data):
+    """Expo Push Service: сам доставляет через FCM (Android) и APNs (iOS)."""
+    import requests
+
+    from apps.accounts.models import Device
+
+    messages = [{"to": token, "title": title, "body": body, "data": data, "sound": "default"} for token in tokens]
+    try:
+        response = requests.post("https://exp.host/--/api/v2/push/send", json=messages, timeout=10)
+        response.raise_for_status()
+    except requests.RequestException:
+        logger.exception("Ошибка отправки Expo push")
+        return
+    for token, ticket in zip(tokens, response.json().get("data", [])):
+        if ticket.get("status") == "error" and (ticket.get("details") or {}).get("error") == "DeviceNotRegistered":
+            Device.objects.filter(token=token).delete()
 
 
 def _send_fcm(tokens, title, body, data):
